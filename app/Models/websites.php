@@ -19,6 +19,9 @@ class websites extends Model
         'logo_path',
         'gallery_photos',
         'gallery_prices',
+        'is_published',
+        'color_primary',
+        'color_text',
         ];
 
     protected function casts(): array
@@ -26,6 +29,7 @@ class websites extends Model
         return [
             'gallery_photos' => 'array',
             'gallery_prices' => 'array',
+            'is_published' => 'boolean',
         ];
     }
 

@@ -15,7 +15,8 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name' => 'Test User',
-            'password' => '123'
+            'password' => '123',
+            'role' => 'superadmin',
         ]);
 
         templates::create([

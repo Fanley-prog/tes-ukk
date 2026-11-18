@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/add', [AdminController::class, 'add']);
     Route::post('/add', [AdminController::class, 'store']);
 
+    Route::patch('/websites/{id}/publish', [AdminController::class, 'togglePublish'])->name('websites.publish');
+
     Route::delete('/delete/{id}', [AdminController::class, 'delete']);
 
     Route::get('/edit/{id}', [AdminController::class, 'edit']);
@@ -24,9 +27,19 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
+Route::middleware('superadmin')->group(function () {
+        Route::get('/admins', [AdminUserController::class, 'index'])->name('admins.index');
+        Route::post('/admins', [AdminUserController::class, 'store'])->name('admins.store');
+
+        Route::get('/admins/{id}/edit', [AdminUserController::class, 'edit'])->name('admins.edit');
+        Route::put('/admins/{id}', [AdminUserController::class, 'update'])->name('admins.update');
+
+        Route::delete('/admins/{id}', [AdminUserController::class, 'destroy'])->name('admins.destroy');
+});
+
     Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 
     
     });
 
-Route::get('/template1/{slug}', [WebsiteController::class, 'template1']);
+Route::get('/site/{slug}', [WebsiteController::class, 'template1']);

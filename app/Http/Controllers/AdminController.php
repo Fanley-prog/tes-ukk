@@ -13,11 +13,12 @@ use App\Models\ActivityLog;
 
 class AdminController extends Controller
 {
-    public function index()
+        public function index()
     {
         $websites = websites::with('template')->get();
+        $totalWebsites = $websites->count();
 
-        return view('welcome', compact('websites'));
+        return view('welcome', compact('websites', 'totalWebsites'));
     }
     public function add()
     {
@@ -42,8 +43,10 @@ class AdminController extends Controller
             'gallery_photos.4' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm', 'max:100000'],
             'gallery_prices' => ['nullable', 'array', 'max:5'],
             'gallery_prices.*' => ['nullable', 'string', 'max:100'],
-            'whatsapp' => ['required', 'string'],
-            'instagram' => ['nullable', 'string'],
+            'whatsapp'  => 'nullable|string|max:20',
+            'instagram' => 'nullable|string|max:100',
+            'color_primary' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'color_text'    => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
         $logoPath = $request->file('logo')->store('websites/logos', 'public');
@@ -62,11 +65,13 @@ class AdminController extends Controller
             'bio' => $validated['bio'] ?? null,
             'slug' => $validated['slug'],
             'id_template' => $validated['id_template'],
-            'whatsapp' => $validated['whatsapp'],
+            'whatsapp' => $validated['whatsapp'] ?? null,
             'instagram' => $validated['instagram'] ?? null,
             'logo_path' => $logoPath,
             'gallery_photos' => $galleryPhotoPaths,
             'gallery_prices' => $galleryPrices,
+            'color_primary' => $validated['color_primary'],
+            'color_text' => $validated['color_text'],
         ]);
 
         $this->recordActivity($request, 'website.created', "Website {$website->name_website} dibuat");
@@ -89,6 +94,21 @@ class AdminController extends Controller
         $website->delete();
 
         $this->recordActivity($request, 'website.deleted', "Website {$websiteName} dihapus");
+
+        return redirect('/');
+    }
+
+    public function togglePublish(Request $request, $id): RedirectResponse
+    {
+        $website = websites::findOrFail($id);
+
+        $website->update(['is_published' => ! $website->is_published]);
+
+        if ($website->is_published) {
+            $this->recordActivity($request, 'website.published', "Website {$website->name_website} dipublikasikan");
+        } else {
+            $this->recordActivity($request, 'website.unpublished', "Website {$website->name_website} dijadikan draft");
+        }
 
         return redirect('/');
     }
@@ -125,6 +145,8 @@ class AdminController extends Controller
             'gallery_photos.4' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm', 'max:51200'],
             'gallery_prices' => ['nullable', 'array', 'max:5'],
             'gallery_prices.*' => ['nullable', 'string', 'max:100'],
+            'color_primary' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'color_text' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'whatsapp' => ['required', 'string'],
             'instagram' => ['nullable', 'string'],
         ]);
@@ -168,6 +190,8 @@ class AdminController extends Controller
             'logo_path' => $logoPath,
             'gallery_photos' => array_values($galleryPhotoPaths),
             'gallery_prices' => $galleryPrices,
+            'color_primary' => $validated['color_primary'],
+            'color_text' => $validated['color_text'],
         ]);
 
         $this->recordActivity($request, 'website.updated', "Website {$website->name_website} diubah");
@@ -225,11 +249,6 @@ class AdminController extends Controller
         ]);
 
         $request->user()->update([
-            'name' => $validated['name'],
-            'password' => $validated['password'],
-        ]);
-
-                $request->user()->update([
             'name' => $validated['name'],
             'password' => $validated['password'],
         ]);
